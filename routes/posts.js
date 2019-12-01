@@ -12,7 +12,7 @@ function postsRoutes(app) {
             // db.collection('posts')
                 .find({})
                 // .toArray()
-                .sort('-created') //from new to old
+                .sort('-created') //sort posts in order from new post to old post
                 .limit(Number(req.query.limit || 20))
                 .offset(Number(req.query.offset || 0))
                 .then(list => res.json(list).end())
