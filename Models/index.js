@@ -15,25 +15,9 @@
 //New with mongoose
 
 const mongoose = require('mongoose');
-mongoose.connect("mongodb://heroku_mjrklbvl:6an38k795kgunjropt3673dhm@ds033579.mlab.com:33579/heroku_mjrklbvl", {useNewUrlParser: true})
+const mongoUri = process.env.MONGODB_URI || "mongodb://heroku_mh0m3qpk:28qruprog666r4frdfj4i74cs@ds039211.mlab.com:39211/heroku_mh0m3qpk";
+mongoose.connect(mongoUri, {useNewUrlParser: true})
 .catch(() => process.exit(1));
 
-mongoose.model('User', {
-  name:{
-      type:String,
-      required:true,
-      unique:true,
-      validate(value){
-          return value.includes('@');
-      },
-  },
-  username:String,
-  password:String,
-  birthDate:Date,
-  gender: {
-      type:String,
-          enum:['f','m']
-    },
-    githubLink:String,
-    about:String
-});
+require ('./post');
+require ('./user');
