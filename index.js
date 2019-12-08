@@ -3,28 +3,36 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const {port, jwtSecret} = require('./config');
+const jwt = require('jsonwebtoken');
 
-require('./Models');
+require('./models');
 
 const app = express();
-const port = 4000;
 
-app.use(express.static('public')); //Enables us to gain access to the file via website
-app.use(morgan('combined')); // Writes to the console log(Combined is how it write the log)
-app.use(cors()); // Allows access to all sites.
-app.use(bodyParser.json()); // Replaces the use of parsing and stringify
+app.use(express.static('public'));
+app.use(morgan('combined'));
+
+app.use(cors({
+    origin:true,
+    credential:true
+}));
+
 app.use(cookieParser());
+app.use(bodyParser.json());
 
-require('./routes/users')(app); //calls the function
-require('./routes/posts')(app); //calls the function
-
-
-app.listen(port, () => console.log(`app listening on port ${port}!`));
-
-
-
-// connect().then(db => {
-//     // console.log('db is connected');
-//
-// });
-
+app.use(function(req, res, next) {
+    if (req.cookies.user) {
+        try {
+            req.user = jwt.verify(req.cookies.user, jwtSecret).data;
+        } catch(e) {
+            res.cookie('user', '');
+            res.status(403).json({message: `user not authorized`}).end();
+        }
+        console.log(req.user)
+    }
+    next();
+});
+require('./routes/users')(app);
+require('./routes/posts')(app);
+app.listen(port, () => console.log(`App listening on port ${port}!`));

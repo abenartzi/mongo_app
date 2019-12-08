@@ -15,9 +15,11 @@
 //New with mongoose
 
 const mongoose = require('mongoose');
-const mongoUri = process.env.MONGODB_URI || "mongodb://heroku_mh0m3qpk:28qruprog666r4frdfj4i74cs@ds039211.mlab.com:39211/heroku_mh0m3qpk";
-mongoose.connect(mongoUri, {useNewUrlParser: true})
-.catch(() => process.exit(1));
+const {mongoUri} = require('../config');
+
+mongoose
+    .connect(mongoUri, {useNewUrlParser: true})
+    .catch(() => process.exit(1));
 
 require ('./post');
 require ('./user');

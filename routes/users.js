@@ -4,7 +4,9 @@
 //edit existing user
 const mongoose = require('mongoose');
 const User = mongoose.model('User');//Uppercase name and lowercase 'model'
-const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');//
+const {jwtSecret} = require('../config');
+const authorize = require('../config/authorization');
 
 function usersRoutes(app) {
     app
@@ -15,6 +17,12 @@ function usersRoutes(app) {
             // .toArray()
             .then(list => res.json(list).end())
     })
+        .get('/api/users/me',authorize,(req,res) => {
+            User.findById(req.user)
+                .select('_id username name birthDate gender about created')
+                .then(user => res.json(user));
+
+        })
         .get('/api/users/:userId',(req,res) => {
             User.findById(req.params.userId)
                 .select("name username birthDate gender githublink about created")
@@ -22,7 +30,7 @@ function usersRoutes(app) {
                 .catch(() => res.status(400).json({message:"User Not present"}).end())
 
 
-        }) //Get user by Id
+        })
         .post('/api/users',(req,res) => {
             const user = new User(req.body);
             user.save()
@@ -61,14 +69,14 @@ function usersRoutes(app) {
                         return;
                     }
                     const token = jwt.sign({
-                        exp:60 * 60 * 24 * 7,
                         data:user._id
-                    },'123sdfs786d7f6s8');
-                    res.cookie('user',token)
-                    res.json({token});
+                    },jwtSecret,{expiresIn: '7d'});
+                    res.cookie('user',token);
+                    res.json({token})
                 })
                 .catch(() => res.status(400).end());
         })
+
 }
 
 module.exports = usersRoutes;

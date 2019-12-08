@@ -2,6 +2,7 @@
 //removePostbyid
 //add new Post
 //edit existing Post
+const authorize = require('../config/authorization');
 const mongoose = require('mongoose');
 const Post = mongoose.model('Post');//Uppercase name and lowercase 'model'
 const multer = require('multer');
@@ -18,7 +19,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-
 function postsRoutes(app) {
     app
         .get('/api/posts', (req, res) => {
@@ -28,12 +28,12 @@ function postsRoutes(app) {
                 // .toArray()
                 .sort('-created') //sort posts in order from new post to old post
                 .limit(Number(req.query.limit || 20))
-                .offset(Number(req.query.offset || 0))
+                .skip(Number(req.query.offset || 0))
                 .then(list => res.json(list).end())
         })
-        .post('/api/posts', upload.single('image'),(req,res) => {
+        .post('/api/posts',authorize, upload.single('image'),(req,res) => {
             const post = new Post(req.body);
-            post.user = mongoose.Types.ObjectId(1);
+            post.user = req.user;
             post.image = req.file.filename;
             post.save()
                 .then(post => res.json(post).end())
@@ -48,14 +48,14 @@ function postsRoutes(app) {
 
 
         }) //Get post by Id
-        .post('/api/posts',(req,res) => {
+        .post('/api/posts',authorize,(req,res) => {
             const post = new Post(req.body);
             post.save()
                 .then(post => res.json(post).end())
                 .catch(err => res.status(400).json(err).end())
 
         })
-        .delete('/api/posts/:postId',(req,res) => {
+        .delete('/api/posts/:postId',authorize,(req,res) => {
             Post.findById(req.params.postId)
                 .then(post => post.remove())
                 .then((post) => res.json(post).end())
@@ -63,7 +63,7 @@ function postsRoutes(app) {
 
 
         })
-        .put('/api/posts/:postId',(req,res) => {
+        .put('/api/posts/:postId',authorize, (req,res) => { //Edits the post
             Post.findById(req.params.postId)
                 .then(post => Object.assign(post, req.body))
                 .then(post => post.save())
@@ -73,6 +73,27 @@ function postsRoutes(app) {
                     res.status(400).json({message:"Failed to update post"}).end()
                 })
         })
+        .post('/api/posts/:postId/like',authorize, (req,res) => {
+            const user = req.user;
+            const status = req.body.status || false;
+            Post.findById(req.params.postId)
+                .then(post => {
+                    post.likes = post.likes.filter(like => !like.equals(user));
+                    if(status) {
+                        post.likes.push(user)
+                    }
+                    return post.save();
+                })
+                .then(() => {
+                    res.status(200).json({
+                        status:status
+                    }).end()
+                })
+                .catch(() => res.status(400).end())
+
+
+
+    })
 }
 
 module.exports = postsRoutes;
