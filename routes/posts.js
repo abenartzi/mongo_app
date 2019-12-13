@@ -21,6 +21,10 @@ const upload = multer({ storage: storage });
 
 function postsRoutes(app) {
     app
+        .post('/api/posts/me',authorize, (req,res) => {
+            Post.findById(req.user)
+                .then(err => res.json(err).end())
+        })
         .get('/api/posts', (req, res) => {
             Post
             // db.collection('posts')
